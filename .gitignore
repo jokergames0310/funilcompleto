@@ -1,0 +1,25 @@
+# Credenciais e configuracao
+.env
+.env.local
+.env.production
+
+# Dados locais
+data/logs/
+data/uploads/
+
+# Node/npm (se usar)
+node_modules/
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cache
+*.cache
