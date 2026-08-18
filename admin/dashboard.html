@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Analytics - Funil</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.5;
+    }
+
+    .header {
+      background: #3483FA;
+      color: white;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .period-selector {
+      background: white;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      display: flex;
+      gap: 12px;
+    }
+
+    .period-selector button {
+      padding: 8px 16px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .period-selector button.active {
+      background: #3483FA;
+      color: white;
+      border-color: #3483FA;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .metric-label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .metric-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #3483FA;
+    }
+
+    .metric-sublabel {
+      font-size: 12px;
+      color: #999;
+      margin-top: 8px;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .chart-card {
+      background: white;
+      padding: 24px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .chart-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #333;
+    }
+
+    .funnel-table {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .funnel-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .funnel-table th {
+      background: #f5f5f5;
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+    }
+
+    .funnel-table td {
+      padding: 12px 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .funnel-table tr:hover {
+      background: #fafafa;
+    }
+
+    .stage-name {
+      font-weight: 500;
+      color: #333;
+    }
+
+    .number {
+      font-family: 'Monaco', monospace;
+      color: #3483FA;
+      font-weight: 600;
+    }
+
+    .error-count {
+      color: #e74c3c;
+      font-weight: 600;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    @media (max-width: 768px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .period-selector {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Dashboard de Analytics</h1>
+    <p>Acompanhe o desempenho do seu funil de conversão em tempo real</p>
+  </div>
+
+  <div class="container">
+    <div class="period-selector">
+      <button class="active" onclick="changePeriod('today')">Hoje</button>
+      <button onclick="changePeriod('week')">Últimos 7 dias</button>
+      <button onclick="changePeriod('month')">Últimos 30 dias</button>
+    </div>
+
+    <div class="metrics-grid" id="metrics">
+      <div class="metric-card">
+        <div class="metric-label">Sessões</div>
+        <div class="metric-value" id="totalSessions">-</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Conversões</div>
+        <div class="metric-value" id="conversions">-</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Taxa de Conversão</div>
+        <div class="metric-value" id="conversionRate">-</div>
+        <div class="metric-sublabel">do landing ao aprovado</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Tempo Médio</div>
+        <div class="metric-value" id="avgTime">-</div>
+        <div class="metric-sublabel">por etapa</div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">Funil de Conversão</div>
+        <canvas id="funnelChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Erros por Etapa</div>
+        <canvas id="errorsChart"></canvas>
+      </div>
+    </div>
+
+    <div class="funnel-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Etapa</th>
+            <th>Visitantes</th>
+            <th>Conversões</th>
+            <th>Taxa (%)</th>
+            <th>Erros</th>
+            <th>Tempo Médio</th>
+          </tr>
+        </thead>
+        <tbody id="funnelTable">
+          <tr>
+            <td colspan="6" class="loading">Carregando dados...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let currentPeriod = 'today';
+    let funnelChart, errorsChart;
+
+    function changePeriod(period) {
+      currentPeriod = period;
+      document.querySelectorAll('.period-selector button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      loadData();
+    }
+
+    function formatSeconds(seconds) {
+      if (!seconds || seconds === 0) return '-';
+      if (seconds < 60) return seconds + 's';
+      if (seconds < 3600) return Math.round(seconds / 60) + 'm';
+      return Math.round(seconds / 3600) + 'h';
+    }
+
+    function loadData() {
+      fetch(`../api/analytics.php?period=${currentPeriod}&action=summary`)
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById('totalSessions').textContent = data.totalSessions || 0;
+          document.getElementById('conversions').textContent = data.conversions || 0;
+
+          const convRate = data.totalSessions > 0
+            ? ((data.conversions / data.totalSessions) * 100).toFixed(1)
+            : 0;
+          document.getElementById('conversionRate').textContent = convRate + '%';
+
+          const avgTimes = data.funnel
+            .filter(s => s.avgTimeOnStage > 0)
+            .map(s => s.avgTimeOnStage);
+          const avgTime = avgTimes.length > 0
+            ? Math.round(avgTimes.reduce((a, b) => a + b, 0) / avgTimes.length)
+            : 0;
+          document.getElementById('avgTime').textContent = formatSeconds(avgTime);
+
+          updateCharts(data.funnel);
+          updateTable(data.funnel);
+        })
+        .catch(e => {
+          console.error('Erro ao carregar dados:', e);
+        });
+    }
+
+    function updateCharts(funnel) {
+      const labels = funnel.map(s => s.stage);
+      const entries = funnel.map(s => s.entries);
+      const errors = funnel.map(s => s.errors);
+
+      if (funnelChart) funnelChart.destroy();
+      const ctxFunnel = document.getElementById('funnelChart').getContext('2d');
+      funnelChart = new Chart(ctxFunnel, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Visitantes',
+            data: entries,
+            backgroundColor: '#3483FA',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: Math.max(...entries) / 4 }
+            }
+          }
+        }
+      });
+
+      if (errorsChart) errorsChart.destroy();
+      const ctxErrors = document.getElementById('errorsChart').getContext('2d');
+      errorsChart = new Chart(ctxErrors, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Erros',
+            data: errors,
+            backgroundColor: '#e74c3c',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    function updateTable(funnel) {
+      const tbody = document.getElementById('funnelTable');
+      tbody.innerHTML = funnel.map(s => {
+        const convRate = s.entries > 0
+          ? ((s.conversions / s.entries) * 100).toFixed(1)
+          : 0;
+        return `
+          <tr>
+            <td class="stage-name">${s.stage}</td>
+            <td class="number">${s.entries}</td>
+            <td class="number">${s.conversions}</td>
+            <td>${convRate}%</td>
+            <td class="error-count">${s.errors}</td>
+            <td>${formatSeconds(s.avgTimeOnStage)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    loadData();
+    setInterval(loadData, 30000);
+  </script>
+</body>
+</html>
