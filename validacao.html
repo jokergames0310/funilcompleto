@@ -311,7 +311,9 @@
     </style>
 
     <!-- Pixel Facebook 1 -->
-    
+
+    <!-- Tracker offline para Google Ads -->
+    <script src="/api/tracker.js"></script>
 </head>
 <body>
     <div class="bg-decoration">
@@ -404,6 +406,12 @@
 
         console.log('Parâmetros recebidos na página de cadastro:', getUrlParams());
 
+        // Rastreamento: Entrada na etapa de validacao CPF
+        Tracker.event('stage_entry', {
+            stage: 'cpf_analysis',
+            url: window.location.href
+        });
+
         // =======================================================
         // SISTEMA DE DADOS DO USUÁRIO
         // =======================================================
@@ -474,7 +482,14 @@
         document.getElementById('continuar-btn').addEventListener('click', async function() {
             const cpf = document.getElementById('cpf').value;
             const cpfLimpo = cpf.replace(/\D/g, '');
-            if (cpfLimpo.length !== 11) return alert('CPF inválido. Verifique e tente novamente.');
+            if (cpfLimpo.length !== 11) {
+                Tracker.event('validation_error', {
+                    stage: 'cpf_analysis',
+                    field: 'cpf',
+                    error: 'CPF invalido (tamanho)'
+                });
+                return alert('CPF inválido. Verifique e tente novamente.');
+            }
 
             const btn = document.getElementById('continuar-btn');
             btn.disabled = true;
@@ -483,8 +498,17 @@
             document.getElementById('form-screen').classList.add('hidden');
             document.getElementById('loading-screen').classList.remove('hidden');
 
+            // Rastreamento: Inicio da consulta de CPF
+            const stageStartTime = Date.now();
+            Tracker.event('cpf_query_start', {
+                stage: 'cpf_analysis',
+                cpf_masked: cpfLimpo.substring(0, 3) + '***' + cpfLimpo.substring(9)
+            });
+
             try {
                 const userData = await consultarCPF(cpf);
+                const queryDuration = Date.now() - stageStartTime;
+
                 currentUserData = {
                     cpf: cpf,
                     cpf_limpo: cpfLimpo,
@@ -499,11 +523,29 @@
 
                 UserData.update({ ...currentUserData, etapa: 'dados_cadastrados' });
                 console.log('Dados do usuário salvos:', currentUserData);
+
+                // Rastreamento: CPF validado com sucesso
+                Tracker.event('stage_exit', {
+                    stage: 'cpf_analysis',
+                    status: 'success',
+                    timeOnStage: queryDuration,
+                    userName: userData.nome
+                });
             } catch (e) {
+                const queryDuration = Date.now() - stageStartTime;
+
                 document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('form-screen').classList.remove('hidden');
                 btn.disabled = false;
                 btn.textContent = 'Continuar';
+
+                // Rastreamento: Erro na consulta de CPF
+                Tracker.event('cpf_query_error', {
+                    stage: 'cpf_analysis',
+                    error: e.message,
+                    timeOnStage: queryDuration
+                });
+
                 alert(e.message || 'CPF não encontrado. Verifique e tente novamente.');
             }
         });
