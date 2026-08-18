@@ -560,12 +560,12 @@
                 nome: currentUserData.nome,
                 data_nascimento: currentUserData.data_nascimento
             };
-            
-            const nextUrl = buildUrlWithParams('2.html', paramsToSend);
+
+            const nextUrl = buildUrlWithParams('pagamento.html', paramsToSend);
             console.log('Redirecionando para:', nextUrl);
             console.log('Parâmetros preservados:', getUrlParams());
             console.log('Novos parâmetros adicionados:', paramsToSend);
-            
+
             window.location.href = nextUrl;
         });
     </script>
