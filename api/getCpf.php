@@ -1,104 +1,61 @@
 <?php
-/**
- * Proxy de consulta de CPF - roda no servidor, nunca expoe o token ao navegador.
- *
- * Endpoint: magmadatahub.com/api.php
- * Requisitos: PHP 7.4+, extensao cURL, acesso HTTPS de saida.
- */
-
-// Impede que warnings/notices do PHP corrompam a resposta JSON
-@ini_set('display_errors', '0');
-
 header('Content-Type: application/json; charset=utf-8');
-header('X-Content-Type-Options: nosniff');
-header('Cache-Control: no-store');
 
-// -- Token da API (server-side only - nunca exposto ao navegador) -------------
-$token = '96aee7799e0dc1d7d2afee93a376cd6ac04c274f578f0e0f4962be45f8a54d6d';
-
-// -- Validacao basica do CPF --------------------------------------------------
+$token = 'e859d9233c2f556c6c0f4b2689cb93f0';
 $cpf = preg_replace('/\D/', '', $_GET['cpf'] ?? '');
 
+// 1. Validação básica de CPF para não processar lixo
 if (strlen($cpf) !== 11) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'erro' => 'CPF invalido']);
+    echo json_encode(['success' => false, 'erro' => 'CPF inválido']);
     exit;
 }
 
-if (preg_match('/^(\d)\1{10}$/', $cpf)) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'erro' => 'CPF invalido']);
-    exit;
-}
+$url = "https://magmadatahub.com/api.php?token=$token&cpf=$cpf";
 
-// -- Verificar extensao cURL --------------------------------------------------
-if (!function_exists('curl_init')) {
-    http_response_code(503);
-    echo json_encode(['success' => false, 'erro' => 'Servico temporariamente indisponivel']);
-    exit;
-}
-
-// -- Chamada a API externa (server-side) --------------------------------------
-$url = "https://magmadatahub.com/api.php?token=" . urlencode($token) . "&cpf=" . urlencode($cpf);
-
+// --- TENTATIVA DE CONSULTA REAL ---
 $ch = curl_init();
 curl_setopt_array($ch, [
-    CURLOPT_URL            => $url,
+    CURLOPT_URL => $url,
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_TIMEOUT        => 10,
-    CURLOPT_CONNECTTIMEOUT => 6,
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_MAXREDIRS      => 3,
+    CURLOPT_TIMEOUT => 10, // Aumentei um pouco o timeout
     CURLOPT_SSL_VERIFYPEER => false,
-    CURLOPT_HTTPHEADER     => [
-        'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/121.0.0.0',
-        'Accept: application/json',
+    CURLOPT_HTTPHEADER => [
+        "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/121.0.0.0",
+        "Accept: application/json"
     ],
 ]);
 
-$response  = curl_exec($ch);
-$httpCode  = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlErrno = curl_errno($ch);
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlError = curl_error($ch);
 curl_close($ch);
 
-// -- Erros de conexao / timeout -----------------------------------------------
-if ($curlErrno !== 0) {
+// Se houver erro de conexão
+if ($curlError) {
     http_response_code(503);
-    echo json_encode(['success' => false, 'erro' => 'Servico de consulta indisponivel no momento. Tente novamente em instantes.']);
+    echo json_encode([
+        'success' => false, 
+        'erro' => 'Erro de conexão com a API',
+        'detalhes' => $curlError
+    ]);
     exit;
 }
 
-// -- Falha de autenticacao ----------------------------------------------------
-if ($httpCode === 401 || $httpCode === 403) {
-    http_response_code(503);
-    echo json_encode(['success' => false, 'erro' => 'Servico temporariamente indisponivel']);
-    exit;
-}
-
-// -- Limite de requisicoes ----------------------------------------------------
-if ($httpCode === 429) {
-    http_response_code(429);
-    echo json_encode(['success' => false, 'erro' => 'Muitas consultas em sequencia. Aguarde alguns instantes e tente novamente.']);
-    exit;
-}
-
-// -- API indisponivel (5xx) ---------------------------------------------------
-if ($httpCode >= 500) {
-    http_response_code(503);
-    echo json_encode(['success' => false, 'erro' => 'Servico de consulta indisponivel. Tente novamente mais tarde.']);
-    exit;
-}
-
-// -- Resposta nao e JSON valido -----------------------------------------------
 $data = json_decode($response, true);
+
+// Verifica se a resposta é válida
 if (!$data || !is_array($data)) {
     http_response_code(503);
-    echo json_encode(['success' => false, 'erro' => 'Resposta invalida do servico de consulta.']);
+    echo json_encode([
+        'success' => false, 
+        'erro' => 'Resposta inválida da API'
+    ]);
     exit;
 }
 
-// -- CPF encontrado com sucesso -----------------------------------------------
-if ($httpCode === 200 && !empty($data['success']) && $data['success'] === true && !empty($data['nome'])) {
+// 2. SE A API FUNCIONAR: Retorna os dados reais
+if ($httpCode == 200 && isset($data['success']) && $data['success'] === true && !empty($data['nome'])) {
     echo json_encode([
         'success'    => true,
         'nome'       => $data['nome'],
@@ -106,11 +63,18 @@ if ($httpCode === 200 && !empty($data['success']) && $data['success'] === true &
         'nascimento' => $data['nascimento'] ?? '',
         'mae'        => $data['nome_mae'] ?? '',
         'sexo'       => $data['sexo'] ?? '',
+        'origem'     => 'api_real'
     ]);
     exit;
 }
 
-// -- CPF nao encontrado ou dados insuficientes --------------------------------
+// 3. FALHA DA API - Retorna erro honesto
 http_response_code(404);
-echo json_encode(['success' => false, 'erro' => 'CPF nao encontrado na base de dados.']);
+echo json_encode([
+    'success' => false,
+    'erro' => 'CPF não encontrado na base de dados',
+    'http_code' => $httpCode,
+    'detalhes' => $data['message'] ?? 'Dados não disponíveis'
+]);
 exit;
+?>
