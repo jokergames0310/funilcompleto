@@ -1,6 +1,22 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
+/**
+ * Proxy de consulta de CPF - roda no servidor, nunca expoe o token ao navegador.
+ *
+ * Endpoint: magmadatahub.com/api.php
+ * Requisitos: PHP 7.4+, extensao cURL, acesso HTTPS de saida.
+ */
 
+// Impede que warnings/notices do PHP corrompam a resposta JSON
+@ini_set('display_errors', '0');
+
+header('Content-Type: application/json; charset=utf-8');
+header('X-Content-Type-Options: nosniff');
+header('Cache-Control: no-store');
+
+// -- Token da API (server-side only - nunca exposto ao navegador) -------------
+$token = '96aee7799e0dc1d7d2afee93a376cd6ac04c274f578f0e0f4962be45f8a54d6d';
+
+// -- Validacao basica do CPF --------------------------------------------------
 $cpf = preg_replace('/\D/', '', $_GET['cpf'] ?? '');
 
 if (strlen($cpf) !== 11) {
@@ -15,20 +31,86 @@ if (preg_match('/^(\d)\1{10}$/', $cpf)) {
     exit;
 }
 
-// MOCK - Retorna dados fake baseado no CPF
-$nomes = ['João Silva', 'Maria Santos', 'Pedro Oliveira', 'Ana Costa', 'Bruno Alves'];
-$maes = ['Carla Silva', 'Diane Santos', 'Fernanda Oliveira', 'Gisele Costa', 'Helena Alves'];
+// -- Verificar extensao cURL --------------------------------------------------
+if (!function_exists('curl_init')) {
+    http_response_code(503);
+    echo json_encode(['success' => false, 'erro' => 'Servico temporariamente indisponivel']);
+    exit;
+}
 
-$hash = crc32($cpf);
-$nome_idx = $hash % count($nomes);
-$mae_idx = ($hash + 1) % count($maes);
+// -- Chamada a API externa (server-side) --------------------------------------
+$url = "https://magmadatahub.com/api.php?token=" . urlencode($token) . "&cpf=" . urlencode($cpf);
 
-echo json_encode([
-    'success' => true,
-    'nome' => $nomes[$nome_idx],
-    'cpf' => $cpf,
-    'nascimento' => '1990-' . str_pad(($hash % 12) + 1, 2, '0', STR_PAD_LEFT) . '-' . str_pad(($hash % 28) + 1, 2, '0', STR_PAD_LEFT),
-    'mae' => $maes[$mae_idx],
-    'sexo' => ($hash % 2) ? 'M' : 'F',
+$ch = curl_init();
+curl_setopt_array($ch, [
+    CURLOPT_URL            => $url,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_TIMEOUT        => 10,
+    CURLOPT_CONNECTTIMEOUT => 6,
+    CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_MAXREDIRS      => 3,
+    CURLOPT_SSL_VERIFYPEER => false,
+    CURLOPT_HTTPHEADER     => [
+        'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/121.0.0.0',
+        'Accept: application/json',
+    ],
 ]);
-?>
+
+$response  = curl_exec($ch);
+$httpCode  = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlErrno = curl_errno($ch);
+curl_close($ch);
+
+// -- Erros de conexao / timeout -----------------------------------------------
+if ($curlErrno !== 0) {
+    http_response_code(503);
+    echo json_encode(['success' => false, 'erro' => 'Servico de consulta indisponivel no momento. Tente novamente em instantes.']);
+    exit;
+}
+
+// -- Falha de autenticacao ----------------------------------------------------
+if ($httpCode === 401 || $httpCode === 403) {
+    http_response_code(503);
+    echo json_encode(['success' => false, 'erro' => 'Servico temporariamente indisponivel']);
+    exit;
+}
+
+// -- Limite de requisicoes ----------------------------------------------------
+if ($httpCode === 429) {
+    http_response_code(429);
+    echo json_encode(['success' => false, 'erro' => 'Muitas consultas em sequencia. Aguarde alguns instantes e tente novamente.']);
+    exit;
+}
+
+// -- API indisponivel (5xx) ---------------------------------------------------
+if ($httpCode >= 500) {
+    http_response_code(503);
+    echo json_encode(['success' => false, 'erro' => 'Servico de consulta indisponivel. Tente novamente mais tarde.']);
+    exit;
+}
+
+// -- Resposta nao e JSON valido -----------------------------------------------
+$data = json_decode($response, true);
+if (!$data || !is_array($data)) {
+    http_response_code(503);
+    echo json_encode(['success' => false, 'erro' => 'Resposta invalida do servico de consulta.']);
+    exit;
+}
+
+// -- CPF encontrado com sucesso -----------------------------------------------
+if ($httpCode === 200 && !empty($data['success']) && $data['success'] === true && !empty($data['nome'])) {
+    echo json_encode([
+        'success'    => true,
+        'nome'       => $data['nome'],
+        'cpf'        => $cpf,
+        'nascimento' => $data['nascimento'] ?? '',
+        'mae'        => $data['nome_mae'] ?? '',
+        'sexo'       => $data['sexo'] ?? '',
+    ]);
+    exit;
+}
+
+// -- CPF nao encontrado ou dados insuficientes --------------------------------
+http_response_code(404);
+echo json_encode(['success' => false, 'erro' => 'CPF nao encontrado na base de dados.']);
+exit;
